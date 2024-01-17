@@ -54,5 +54,13 @@ namespace InputSystemActionPrompts
             if (m_TextField == null) return;
             m_TextField.text = InputDevicePromptSystem.InsertPromptSprites(m_OriginalText);
         }
+
+
+        public void CallRebuild()
+        {
+            InputDevicePromptSystem.ReBuildBindingMaps();
+        }
+
+
     }
 }

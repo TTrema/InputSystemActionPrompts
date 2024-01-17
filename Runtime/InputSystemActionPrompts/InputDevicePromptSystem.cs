@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -195,21 +195,27 @@ namespace InputSystemActionPrompts
             
             if (!s_DeviceDataBindingMap.ContainsKey(activeDeviceName))
             {
-                return $"MISSING_DEVICE_ENTRIES '{activeDeviceName}'";
+                // return $"MISSING_DEVICE_ENTRIES '{activeDeviceName}'";
+                Debug.LogWarning($"MISSING_DEVICE_ENTRIES '{activeDeviceName}'");
+                return $"";
             }
 
             var lowerCaseTag = inputTag.ToLower();
 
             if (!s_ActionBindingMap.ContainsKey(lowerCaseTag))
             {
-                return $"MISSING_ACTION {lowerCaseTag}";
+                // return $"MISSING_ACTION {lowerCaseTag}";
+                Debug.LogWarning($"MISSING_ACTION {lowerCaseTag}");
+                return $"";
             }
 
             var (validDevice, matchingPrompt) = GetActionPathBindingPromptEntries(inputTag);
            
             if (matchingPrompt==null || matchingPrompt.Count==0)
             {
-                return $"MISSING_PROMPT '{inputTag}'";
+                // return $"MISSING_PROMPT '{inputTag}'";
+                Debug.LogWarning($"MISSING_PROMPT '{inputTag}'");
+                return $"";
             }
             // Return each
             var outputText = string.Empty;
@@ -413,7 +419,59 @@ namespace InputSystemActionPrompts
                 }
             }
         }
-        
+ 
+
+         public static void ReBuildBindingMaps()
+        {
+
+            if (s_Settings == null)
+            {
+                return;
+            }
+
+
+            s_ActionBindingMap = new Dictionary<string, List<ActionBindingMapEntry>>();
+            
+            
+            // Build a map of all controls and associated bindings
+            foreach (var inputActionAsset in s_Settings.InputActionAssets)
+            {
+
+
+                if (inputActionAsset == null)
+                {
+                    Debug.LogWarning("InputActionAsset is null");
+                    continue;
+                }
+
+                var allActionMaps = inputActionAsset.actionMaps;
+                foreach (var actionMap in allActionMaps)
+                {
+                    foreach (var binding in actionMap.bindings)
+                    {
+                        var bindingPath = $"{actionMap.name}/{binding.action}";
+                        var bindingPathLower = bindingPath.ToLower();
+                        
+                        //Debug.Log($"Binding {bindingPathLower} to path {binding.path}");
+                        var entry = new ActionBindingMapEntry
+                        {
+                            BindingPath = binding.path,
+                            IsComposite = binding.isComposite,
+                            IsPartOfComposite = binding.isPartOfComposite
+                        };
+                        if (s_ActionBindingMap.TryGetValue(bindingPathLower, out var value))
+                        {
+                            value.Add(entry);
+                        }
+                        else
+                        {
+                            s_ActionBindingMap.Add(bindingPathLower, new List<ActionBindingMapEntry> { entry});
+                        }
+                    }
+                }
+            }
+        }
+       
         /// <summary>
         /// Called when a button is pressed on any device
         /// </summary>
